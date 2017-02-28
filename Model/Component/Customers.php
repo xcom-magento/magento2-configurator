@@ -50,10 +50,6 @@ class Customers extends ComponentAbstract
                 $file = new File();
                 $parser = new Csv($file);
                 return $parser->getData($source);
-            } elseif ($fileType === self::TYPE_YAML) {
-                $this->type = self::TYPE_YAML;
-                $parser = new Yaml();
-                return $parser->parse(file_get_contents($source));
             }
         } catch (ComponentException $e) {
             $this->log->logError($e->getMessage());
@@ -83,12 +79,13 @@ class Customers extends ComponentAbstract
                 $customersArray[] = $customerArray;
             }
 
-            foreach($customersArray as $customerArray) {
+            foreach ($customersArray as $customerArray) {
                 try {
                     $customer = $this->customerFactory->create();
                     $customer->setData($customerArray);
                     $customer->save();
-                    $this->log->logInfo($customer->getFirstname() . ' ' .$customer->getLastname() . ' ' . $customer->getEmail());
+                    $log = $customer->getFirstname() . ' ' .$customer->getLastname() . ' ' . $customer->getEmail();
+                    $this->log->logInfo($log);
                 } catch (\Exception $e) {
                     $this->log->logError($e->getMessage() . ' (' . $customer->getEmail() . ')');
                 }

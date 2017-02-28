@@ -43,12 +43,7 @@ class CustomerGroups extends ComponentAbstract
     {
         try {
             $fileType = $this->getFileType($source);
-            if ($fileType === self::TYPE_CSV) {
-                $this->type = self::TYPE_CSV;
-                $file = new File();
-                $parser = new Csv($file);
-                return $parser->getData($source);
-            } elseif ($fileType === self::TYPE_YAML) {
+            if ($fileType === self::TYPE_YAML) {
                 $this->type = self::TYPE_YAML;
                 $parser = new Yaml();
                 return $parser->parse(file_get_contents($source));
@@ -60,38 +55,21 @@ class CustomerGroups extends ComponentAbstract
 
     protected function processData($data = null)
     {
-        if ($this->type === self::TYPE_CSV) {
-            // Get the first row of the CSV file for the attribute columns.
-            if (!isset($data[0])) {
-                throw new ComponentException(
-                    sprintf('The row data is not valid.')
-                );
-            }
-            $attributeKeys = $this->getAttributesFromCsv($data);
-            unset($data[0]);
-        
-            // Prepare the data
-            $groupsArray = array();
+        // Prepare the data
+        $groupsArray = array();
 
-            foreach ($data as $group) {
-                $groupArray = array();
-                foreach ($attributeKeys as $column => $code) {
-                    $groupArray[$code] = $group[$column];
-                }
-                $groupsArray[] = $groupArray;
-            }
-        } else {
+        if (array_key_exists('customer_groups', $data)) {
             $groupsArray = $data['customer_groups'];
-        }
-
-        foreach ($groupsArray as $groupArray) {
-            try {
-                $group = $this->groupFactory->create();
-                $group->setData($groupArray);
-                $group->save();
-                $this->log->logInfo($group->getCode());
-            } catch (\Exception $e) {
-                $this->log->logError($e->getMessage() . ' (' . $groupArray['code'] . ')');
+        
+            foreach ($groupsArray as $groupArray) {
+                try {
+                    $group = $this->groupFactory->create();
+                    $group->setData($groupArray);
+                    $group->save();
+                    $this->log->logInfo($group->getCode());
+                } catch (\Exception $e) {
+                    $this->log->logError($e->getMessage() . ' (' . $groupArray['code'] . ')');
+                }
             }
         }
         
