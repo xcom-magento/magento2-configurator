@@ -37,6 +37,24 @@ products:
     local:
       mode: maintain
       log: debug
+groups:
+  enabled: 1
+  method: code
+  sources:
+    - ../configurator/Customers/groups.csv
+  env:
+    local:
+      mode: maintain
+      log: debug
+customers:
+  enabled: 1
+  method: code
+  sources:
+    - ../configurator/Customers/customers.csv
+  env:
+    local:
+      mode: maintain
+      log: debug
 blocks:
   enabled: 1
   method: code

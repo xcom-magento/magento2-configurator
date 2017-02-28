@@ -1,0 +1,7 @@
+customer_groups:
+-
+  code: Group 1
+  tax_class_id: 3
+-
+  code: Group 2
+  tax_class_id: 3

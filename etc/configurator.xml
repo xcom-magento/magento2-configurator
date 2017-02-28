@@ -6,6 +6,8 @@
     <component name="config" class="CtiDigital\Configurator\Model\Component\Config" />
     <component name="categories" class="CtiDigital\Configurator\Model\Component\Categories" />
     <component name="products" class="CtiDigital\Configurator\Model\Component\Products" />
+    <component name="customers" class="CtiDigital\Configurator\Model\Component\Customers" />
+    <component name="groups" class="CtiDigital\Configurator\Model\Component\CustomerGroups" />
     <component name="blocks" class="CtiDigital\Configurator\Model\Component\Blocks" />
     <component name="pages" class="CtiDigital\Configurator\Model\Component\Pages" />
 </config>

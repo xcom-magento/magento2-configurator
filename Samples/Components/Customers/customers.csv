@@ -1,0 +1,2 @@
+email,_website,_store,dob,firstname,gender,group_id,lastname,middlename,password,prefix,store_id,taxvat,website_id
+test@example.com,base,default,1973-12-15,John,1,1,Smith,David,password,Mr,1,123,1

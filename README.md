@@ -44,17 +44,17 @@ php vendor/bin/phpunit --coverage-clover build/logs/clover.xml vendor/ctidigital
 | Blocks                    | :white_check_mark: | :x:           | :white_check_mark: |
 | Attribute Sets            | :x:                | :x:           | :x:                |
 | Attributes                | :x:                | :x:           | :x:                |
-| Categories                | :x:                | :x:           | :x:                |
+| Categories                | :white_check_mark: | :x:           | :white_check_mark: |
 | Products                  | :x:                | :x:           | :x:                |
 | Admin Roles               | :x:                | :x:           | :x:                |
 | Admin Users               | :x:                | :x:           | :x:                |
 | Pages                     | :white_check_mark: | :x:           | :white_check_mark: |
-| Customers                 | :x:                | :x:           | :x:                |
+| Customers                 | :white_check_mark: | :x:           | :white_check_mark: |
 | Media                     | :x:                | :x:           | :x:                |
 | Widgets                   | :x:                | :x:           | :x:                |
 | Related Products          | :x:                | :x:           | :x:                |
 | SQL                       | :x:                | :x:           | :x:                |
-| Customer Groups           | :x:                | :x:           | :x:                |
+| Customer Groups           | :white_check_mark: | :x:           | :white_check_mark: |
 | Tax Rules                 | :x:                | :x:           | :x:                |
 | API Roles                 | :x:                | :x:           | :x:                |
 | API Users                 | :x:                | :x:           | :x:                |
