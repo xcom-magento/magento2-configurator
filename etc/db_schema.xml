@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table comment="Magento Configurator Versioning Table" engine="innodb" name="magento_configurator_versioning" resource="default">
+        <column comment="Version" identity="true" name="version" nullable="false" unsigned="false" xsi:type="smallint"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="version"/>
+        </constraint>
+        <column xsi:type="datetime" name="update_time" on_update="false" nullable="true" comment="Update time"/>
+    </table>
+</schema>

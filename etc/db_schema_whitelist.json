@@ -1,0 +1,11 @@
+{
+    "magento_configurator_versioning": {
+        "column": {
+            "version": true,
+            "update_time": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}
