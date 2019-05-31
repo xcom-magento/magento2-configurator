@@ -67,6 +67,8 @@ class Config extends YamlComponentAbstract
      */
     protected function processData($data = null)
     {
+        // Clean core config cache data
+        $this->scopeConfig->clean();
         try {
             $validScopes = array('global', 'websites', 'stores');
             foreach ($data as $scope => $configurations) {
