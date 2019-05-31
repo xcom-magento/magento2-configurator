@@ -57,13 +57,21 @@ class RunCommand extends Command
             array()
         );
 
+        $forceOption = new InputOption(
+            'force',
+            'f',
+            InputOption::VALUE_NONE,
+            'Force import of older versions'
+        );
+
         $this
             ->setName('configurator:run')
             ->setDescription('Run configurator components')
             ->setDefinition(
                 new InputDefinition(array(
                     $environmentOption,
-                    $componentOption
+                    $componentOption,
+                    $forceOption
                 ))
             );
     }
@@ -77,13 +85,13 @@ class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-
             if ($output->getVerbosity() > OutputInterface::VERBOSITY_NORMAL) {
                 $output->writeln('<comment>Starting Configurator</comment>');
             }
 
             $environment = $input->getOption('env');
             $components = $input->getOption('component');
+            $force = $input->getOption('force');
 
             $logLevel = OutputInterface::VERBOSITY_NORMAL;
             $verbose = $input->getOption('verbose');
@@ -102,13 +110,14 @@ class RunCommand extends Command
                 $this->processor->addComponent($component);
             }
 
+            $this->processor->setForce($force);
+
             $this->processor->getLogger()->setLogLevel($logLevel);
             $this->processor->run();
 
             if ($output->getVerbosity() > OutputInterface::VERBOSITY_NORMAL) {
                 $output->writeln('<comment>Finished Configurator</comment>');
             }
-
         } catch (ConfiguratorAdapterException $e) {
             $output->writeln('<error>' . $e->getMessage() . '</error>');
         }

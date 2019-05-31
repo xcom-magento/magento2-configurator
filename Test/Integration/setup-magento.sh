@@ -1,8 +1,5 @@
 #!/bin/bash
 
-echo packaging configurator
-tar czf configurator.tar.gz .
-
 echo Setting up Magento
 
 echo Disabling xdebug for performance
@@ -17,6 +14,12 @@ cd magento2
 
 git checkout tags/$1 -b $1
 
+composer install
+
+echo Temporary change versions to attempt to resolve any dependency issue
+composer require symfony/config:4.1.*
+composer require symfony/dependency-injection:3.3.*
+
 if [ -z "${TRAVIS_TAG}" ]; then
     echo Require configurator branch: ${TRAVIS_BRANCH} commit: ${TRAVIS_COMMIT}
     composer require ctidigital/magento2-configurator dev-${TRAVIS_BRANCH}\#${TRAVIS_COMMIT}
@@ -25,20 +28,10 @@ else
     composer require ctidigital/magento2-configurator ${TRAVIS_TAG:1}
 fi
 
-composer install
-
 php bin/magento setup:install --admin-email "test@test.com" --admin-firstname "CTI" --admin-lastname "Test" --admin-password "password123" --admin-user "admin" --backend-frontname admin --base-url "http://configurator.dev" --db-host 127.0.0.1 --db-name configurator --db-user root --session-save files --use-rewrites 1 --use-secure 0 -vvv
 
-echo Move configurator package into its own vendor directory
-mv ../configurator.tar.gz vendor/ctidigital/magento2-configurator/.
-
-cd vendor/ctidigital/magento2-configurator/
-
-echo Extract configurator into the right place
-tar -xf configurator.tar.gz
-
 echo Go to app etc folder
-cd ../../../app/etc
+cd app/etc
 
 echo Copy master.yaml folder
 cp ../../../Samples/master.yaml master.yaml
