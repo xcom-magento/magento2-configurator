@@ -162,6 +162,10 @@ class Processor
 
         // Get versions from master file
         $master = $this->getMasterYaml();
+		if(!isset($master['versions'])) {
+            return false;
+        }
+		
         $masterVersions = array_keys($master['versions']);
         $latestMasterVersion = end($masterVersions);
 
