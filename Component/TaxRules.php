@@ -6,6 +6,7 @@ use Magento\Framework\ObjectManagerInterface;
 use CtiDigital\Configurator\Api\LoggerInterface;
 use Magento\Tax\Model\Calculation\RuleFactory;
 use Magento\Tax\Model\Calculation\RateFactory;
+use Magento\Tax\Model\TaxRuleRepository;
 use Magento\Tax\Model\ClassModelFactory;
 use CtiDigital\Configurator\Exception\ComponentException;
 
@@ -41,24 +42,32 @@ class TaxRules extends CsvComponentAbstract
     protected $classModelFactory;
 
     /**
+     * @var TaxRuleRepository
+     */
+    protected $taxRuleRepository;
+
+    /**
      * TaxRules constructor.
      * @param LoggerInterface $log
      * @param ObjectManagerInterface $objectManager
      * @param RateFactory $rateFactory
      * @param ClassModelFactory $classModelFactory
      * @param RuleFactory $ruleFactory
+     * @param TaxRuleRepository $taxRuleRepository
      */
     public function __construct(
         LoggerInterface $log,
         ObjectManagerInterface $objectManager,
         RateFactory $rateFactory,
         ClassModelFactory $classModelFactory,
-        RuleFactory $ruleFactory
+        RuleFactory $ruleFactory,
+        TaxRuleRepository $taxRuleRepository
     ) {
         parent::__construct($log, $objectManager);
         $this->rateFactory = $rateFactory;
         $this->classModelFactory = $classModelFactory;
         $this->ruleFactory = $ruleFactory;
+        $this->taxRuleRepository = $taxRuleRepository;
     }
 
     /**
@@ -228,8 +237,16 @@ class TaxRules extends CsvComponentAbstract
             ->setProductTaxClassIds($ruleData['product_tax_class_ids'])
             ->setPriority($ruleData['priority'])
             ->setCalculateSubtotal($ruleData['calculate_subtotal'])
-            ->setPosition($ruleData['position'])
-            ->save();
+            ->setPosition($ruleData['position']);
+
+        // Save rule with repository
+        try {
+            $this->taxRuleRepository->save($rule);
+        } catch (\Exception $exception) {
+            $this->log->logError(
+                sprintf('Tax Rule "%s" could not be saved with the following error: "%s"', $ruleData['code'], $exception->getMessage())
+            );
+        }
 
         $this->log->logInfo(
             sprintf('Tax Rule "%s" created.', $ruleData['code'])
