@@ -303,13 +303,17 @@ class Processor
             // Get the master yaml
             $master = $this->getMasterYaml();
 
-            foreach ($master['recurring'] as $componentRecurringAlias => $componentRecurringConfig) {
-                // Run the component in question
-                $this->state->emulateAreaCode(
-                    Area::AREA_ADMINHTML,
-                    [$this, 'runComponent'],
-                    [$componentRecurringAlias, $componentRecurringConfig]
-                );
+            // check if 'recurring' is in $master to avoid undefined index on array
+            if(isset($master['recurring'])) {
+                // loop through recurring
+                foreach ($master['recurring'] as $componentRecurringAlias => $componentRecurringConfig) {
+                    // Run the component in question
+                    $this->state->emulateAreaCode(
+                        Area::AREA_ADMINHTML,
+                        [$this, 'runComponent'],
+                        [$componentRecurringAlias, $componentRecurringConfig]
+                    );
+                }
             }
 
             // Loop over all versions
