@@ -9,6 +9,7 @@ use CtiDigital\Configurator\Api\ConfigInterface;
 use CtiDigital\Configurator\Component\Factory\ComponentFactoryInterface;
 use CtiDigital\Configurator\Api\VersioningRepositoryInterface;
 use CtiDigital\Configurator\Api\Data\VersioningInterfaceFactory;
+use mysql_xdevapi\Exception;
 use Symfony\Component\Yaml\Parser;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
@@ -89,7 +90,8 @@ class Processor
         VersioningRepositoryInterface $versioningRepository,
         VersioningInterfaceFactory $versioningFactory,
         SearchCriteriaInterface $searchCriteria
-    ) {
+    )
+    {
         $this->log = $logging;
         $this->configInterface = $configInterface;
         $this->state = $state;
@@ -162,29 +164,29 @@ class Processor
 
         // Get versions from master file
         $master = $this->getMasterYaml();
-		if(!isset($master['versions'])) {
+        if (!isset($master['versions'])) {
             return false;
         }
-		
+
         $masterVersions = array_keys($master['versions']);
         $latestMasterVersion = end($masterVersions);
 
         // Loop over master versions
-        foreach($masterVersions as $version) {
+        foreach ($masterVersions as $version) {
             // Check if version not already applied
-            if(!in_array($version, $versionsDatabase)) {
+            if (!in_array($version, $versionsDatabase)) {
                 $this->versions[] = $version;
             }
         }
 
-        if(empty($this->versions)) {
+        if (empty($this->versions)) {
             $this->log->logInfo("No new versions found in Master YAML file.");
             return false;
         }
 
         // Check for missing versions
         $missingVersions = $this->getMissingVersions($latestMasterVersion, $latestDatabaseVersion);
-        if($missingVersions && !$this->force) {
+        if ($missingVersions && !$this->force) {
             $this->log->logError(
                 sprintf("There are still some older version(s) not applied: %s. Use the force (-f) command to force the import of these versions", implode(', ', $missingVersions))
             );
@@ -204,8 +206,8 @@ class Processor
     private function getMissingVersions($latestMasterVersion, $latestDatabaseVersion)
     {
         $missingVersions = array();
-        foreach($this->versions as $version) {
-            if($version < $latestMasterVersion && $version < $latestDatabaseVersion) {
+        foreach ($this->versions as $version) {
+            if ($version < $latestMasterVersion && $version < $latestDatabaseVersion) {
                 $missingVersions[] = $version;
             }
         }
@@ -237,8 +239,15 @@ class Processor
      */
     public function run()
     {
+        if (empty($this->components)) {
+            $this->runAllComponents();
+            return;
+        }
+
+        $this->runIndividualComponents();
+
         // Check if there are versions we should run
-        if(!$this->getVersions()) {
+        if (!$this->getVersions()) {
             return;
         }
 
@@ -258,7 +267,7 @@ class Processor
             $master = $this->getMasterYaml();
 
             // Loop over all versions
-            foreach($this->versions as $version) {
+            foreach ($this->versions as $version) {
 
                 // Loop through the components
                 foreach ($this->components as $componentAlias) {
@@ -294,10 +303,19 @@ class Processor
             // Get the master yaml
             $master = $this->getMasterYaml();
 
-            // Loop over all versions
-            foreach($this->versions as $version) {
+            foreach ($master['recurring'] as $componentRecurringAlias => $componentRecurringConfig) {
+                // Run the component in question
+                $this->state->emulateAreaCode(
+                    Area::AREA_ADMINHTML,
+                    [$this, 'runComponent'],
+                    [$componentRecurringAlias, $componentRecurringConfig]
+                );
+            }
 
-                if(!isset($master['versions'][$version])) {
+            // Loop over all versions
+            foreach ($this->versions as $version) {
+
+                if (!isset($master['versions'][$version])) {
                     $this->log->logError(sprintf("Version %s doesn't exist in master file.", $version));
                     return false;
                 }
@@ -371,9 +389,9 @@ class Processor
             );
             return;
         }
-        
+
         // If there are sources for the environment, process them
-        foreach ((array) $componentConfig['env'][$this->getEnvironment()]['sources'] as $source) {
+        foreach ((array)$componentConfig['env'][$this->getEnvironment()]['sources'] as $source) {
             $component->setSource($source)->process();
         }
     }
@@ -433,55 +451,100 @@ class Processor
      */
     private function validateMasterYaml($master)
     {
-        try {
-            if(!isset($master['versions'])) {
-                throw new ComponentException('It appears there are no versions in the Master YAML file.');
-            }
 
-            foreach($master as $versions) {
-                foreach ($versions as $version => $components) {
-                    foreach ($components as $componentAlias => $componentConfig) {
-                        // Check it has a enabled node
-                        if (!isset($componentConfig['enabled'])) {
-                            throw new ComponentException(
-                                sprintf('It appears %s does not have a "enabled" node. This is required.', $componentAlias)
-                            );
-                        }
+        if (isset($master['recurring'])) {
+            foreach ($master['recurring'] as $recurringComponentAlias => $recurrentConfig) {
+                // Check it has a enabled node
+                if (!isset($recurrentConfig['enabled'])) {
+                    throw new ComponentException(
+                        sprintf('It appears %s does not hsafdasdfave a "enabled" node. This is required.', $recurrentConfig)
+                    );
+                }
 
-                        // Check it has at least 1 data source
-                        $sourceCount = 0;
-                        if (isset($componentConfig['sources'])) {
-                            foreach ($componentConfig['sources'] as $i => $source) {
+                // Check it has at least 1 data source
+                $sourceCount = 0;
+                if (isset($recurrentConfig['sources'])) {
+                    foreach ($recurrentConfig['sources'] as $i => $source) {
+                        $sourceCount++;
+                    }
+                }
+
+                if (isset($recurrentConfig['env'])) {
+                    foreach ($recurrentConfig['env'] as $envData) {
+                        if (isset($envData['sources'])) {
+                            foreach ($envData['sources'] as $i => $source) {
                                 $sourceCount++;
                             }
                         }
+                    }
+                }
 
-                        if (isset($componentConfig['env'])) {
-                            foreach ($componentConfig['env'] as $envData) {
-                                if (isset($envData['sources'])) {
-                                    foreach ($envData['sources'] as $i => $source) {
-                                        $sourceCount++;
-                                    }
+                if ($sourceCount < 1) {
+                    throw new ComponentException(
+                        sprintf('It appears there are no data sources for the %s component.', $recurringComponentAlias)
+                    );
+                }
+
+                // Check the component exist
+                if (!$this->isValidComponent($recurringComponentAlias)) {
+                    throw new ComponentException(
+                        sprintf(
+                            '%s not a valid component. Please verify using bin/magento component:list.',
+                            $recurringComponentAlias
+                        )
+                    );
+                }
+            }
+        }
+
+        try {
+            if (!isset($master['versions'])) {
+                throw new ComponentException('It appears there are no versions in the Master YAML file.');
+            }
+
+            foreach ($master['versions'] as $versionComponent) {
+                foreach ($versionComponent as $componentAlias => $componentConfig) {
+                    // Check it has a enabled node
+                    if (!isset($componentConfig['enabled'])) {
+                        throw new ComponentException(
+                            sprintf('It appears %s does not have a "enabled" node. This is required.', $componentAlias)
+                        );
+                    }
+
+                    // Check it has at least 1 data source
+                    $sourceCount = 0;
+                    if (isset($componentConfig['sources'])) {
+                        foreach ($componentConfig['sources'] as $i => $source) {
+                            $sourceCount++;
+                        }
+                    }
+
+                    if (isset($componentConfig['env'])) {
+                        foreach ($componentConfig['env'] as $envData) {
+                            if (isset($envData['sources'])) {
+                                foreach ($envData['sources'] as $i => $source) {
+                                    $sourceCount++;
                                 }
                             }
                         }
-
-                        if ($sourceCount < 1) {
-                            throw new ComponentException(
-                                sprintf('It appears there are no data sources for the %s component.', $componentAlias)
-                            );
-                        }
-
-                        // Check the component exist
-                        if (!$this->isValidComponent($componentAlias)) {
-                            throw new ComponentException(
-                                sprintf(
-                                    '%s not a valid component. Please verify using bin/magento component:list.',
-                                    $componentAlias
-                                )
-                            );
-                        }
                     }
+
+                    if ($sourceCount < 1) {
+                        throw new ComponentException(
+                            sprintf('It appears there are no data sources for the %s component.', $componentAlias)
+                        );
+                    }
+
+                    // Check the component exist
+                    if (!$this->isValidComponent($componentAlias)) {
+                        throw new ComponentException(
+                            sprintf(
+                                '%s not a valid component. Please verify using bin/magento component:list.',
+                                $componentAlias
+                            )
+                        );
+                    }
+
                 }
             }
         } catch (ComponentException $e) {
