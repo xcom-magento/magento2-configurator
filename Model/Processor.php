@@ -239,65 +239,20 @@ class Processor
      */
     public function run()
     {
-        if (empty($this->components)) {
-            $this->runAllComponents();
-            return;
-        }
-
-        $this->runIndividualComponents();
-
         // Check if there are versions we should run
-        if (!$this->getVersions()) {
-            return;
-        }
+        // it will fill $this->versions
+        $this->getVersions();
 
         // If the components list is empty, then the user would want to run all components in the master.yaml
         if (empty($this->components)) {
-            $this->runAllComponents();
+            $this->runComponents(false);
             return;
         }
 
-        $this->runIndividualComponents();
+        $this->runComponents(true);
     }
 
-    private function runIndividualComponents()
-    {
-        try {
-            // Get the master yaml
-            $master = $this->getMasterYaml();
-
-            // Loop over all versions
-            foreach ($this->versions as $version) {
-
-                // Loop through the components
-                foreach ($this->components as $componentAlias) {
-
-                    // Get the config for the component from the master yaml array
-                    if (!isset($master['versions'][$version][$componentAlias])) {
-                        throw new ComponentException(
-                            sprintf("No Master YAML definition with the alias '%s' found in the current version '%s'", $componentAlias, $version)
-                        );
-                    }
-
-                    $masterConfig = $master['versions'][$version][$componentAlias];
-
-                    // Run that component
-                    $this->state->emulateAreaCode(
-                        Area::AREA_ADMINHTML,
-                        [$this, 'runComponent'],
-                        [$componentAlias, $masterConfig]
-                    );
-                }
-
-                // Save current applied version
-                $this->saveVersion($version);
-            }
-        } catch (ComponentException $e) {
-            $this->log->logError($e->getMessage());
-        }
-    }
-
-    private function runAllComponents()
+    private function runComponents($componentsOnly = false)
     {
         try {
             // Get the master yaml
@@ -316,22 +271,47 @@ class Processor
                 }
             }
 
+            // check if versions are found, if not return nothing
+            if(empty($this->versions)) {
+                return;
+            }
             // Loop over all versions
             foreach ($this->versions as $version) {
+                if($componentsOnly) {
+                    // Loop through the components
+                    foreach ($this->components as $componentAlias) {
 
-                if (!isset($master['versions'][$version])) {
-                    $this->log->logError(sprintf("Version %s doesn't exist in master file.", $version));
-                    return false;
-                }
+                        // Get the config for the component from the master yaml array
+                        if (!isset($master['versions'][$version][$componentAlias])) {
+                            throw new ComponentException(
+                                sprintf("No Master YAML definition with the alias '%s' found in the current version '%s'", $componentAlias, $version)
+                            );
+                        }
 
-                // Loop through components and run them individually in the master.yaml order
-                foreach ($master['versions'][$version] as $componentAlias => $componentConfig) {
-                    // Run the component in question
-                    $this->state->emulateAreaCode(
-                        Area::AREA_ADMINHTML,
-                        [$this, 'runComponent'],
-                        [$componentAlias, $componentConfig]
-                    );
+                        $masterConfig = $master['versions'][$version][$componentAlias];
+
+                        // Run that component
+                        $this->state->emulateAreaCode(
+                            Area::AREA_ADMINHTML,
+                            [$this, 'runComponent'],
+                            [$componentAlias, $masterConfig]
+                        );
+                    }
+                } else {
+                    if (!isset($master['versions'][$version])) {
+                        $this->log->logError(sprintf("Version %s doesn't exist in master file.", $version));
+                        return false;
+                    }
+
+                    // Loop through components and run them individually in the master.yaml order
+                    foreach ($master['versions'][$version] as $componentAlias => $componentConfig) {
+                        // Run the component in question
+                        $this->state->emulateAreaCode(
+                            Area::AREA_ADMINHTML,
+                            [$this, 'runComponent'],
+                            [$componentAlias, $componentConfig]
+                        );
+                    }
                 }
 
                 // Save current applied version
