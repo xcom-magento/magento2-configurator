@@ -27,4 +27,5 @@
     <component name="shippingtablerates" class="CtiDigital\Configurator\Component\ShippingTableRates" />
     <component name="customer_attributes" class="CtiDigital\Configurator\Component\CustomerAttributes" />
     <component name="tiered_prices" class="CtiDigital\Configurator\Component\TieredPrices" />
+    <component name="webforms" class="CtiDigital\Configurator\Component\Webforms" />
 </config>
