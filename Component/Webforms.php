@@ -99,7 +99,6 @@ class Webforms extends YamlComponentAbstract
                 $this->log->logError($e->getMessage());
             }
         }
-        die;
     }
 
     /**
