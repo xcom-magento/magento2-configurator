@@ -1,0 +1,5 @@
+webform:
+    -
+      source: ../configurator/Webforms/forms/Registration_new_customer.json
+      is_active: 1
+      overwrite_existing: 1

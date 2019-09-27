@@ -173,3 +173,8 @@ shippingtablerates:
   method: code
   sources:
     - ../configurator/ShippingTableRates/shippingtablerates.yaml
+webforms:
+  enabled: 1
+  method: code
+  sources:
+    - ../configurator/Webforms/webforms.yaml
