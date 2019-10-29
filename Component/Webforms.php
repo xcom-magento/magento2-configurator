@@ -99,6 +99,12 @@ class Webforms extends YamlComponentAbstract
     protected function processForm($data)
     {
         $model = $this->formFactory->create();
+        $unsetAfter = [
+            'fields',
+            'fieldsets',
+            'logic',
+            'store_data'
+        ];
         foreach ($data as $formData) {
             $this->checkRequiredFields($formData);
             $this->setDefaultFields($formData);
@@ -114,6 +120,17 @@ class Webforms extends YamlComponentAbstract
                     $ids = $this->getFormIdsByCode($dataArray);
                     if (!empty($ids) && (bool) $formData['overwrite_existing']) {
                         $result = $this->updateExistingForm($dataArray, $ids);
+                        $resultId = $result->getId();
+                        // unset these fields because we already handle them in the updateExistingForm method
+                        foreach ($unsetAfter as $unset) {
+                            if (in_array($unset, $dataArray)) {
+                                unset($dataArray[$unset]);
+                            }
+                        };
+                        // set all other data
+                        $result->setData($dataArray);
+                        // reset the ID after we used setData() otherwise it'll be NULL
+                        $result->setId($resultId);
                     } else {
                         $result = $model->import($importData);
                     }
